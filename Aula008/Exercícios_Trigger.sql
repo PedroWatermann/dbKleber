@@ -63,21 +63,23 @@ BEGIN
 END $
 
 ## 4 – Crie uma trigger que ao tentar apagar um país faça uma verificação nas tabelas city e country_language, caso encontre algum registro nessa tabela aborte a deleção informando que não pode ser apagado pois há registros em outra tabela. (Pequise mais sobre SIGNAL no MySQL)
+DELIMITER $$
 
+CREATE TRIGGER before_country_delete
+BEFORE DELETE ON country
+FOR EACH ROW
+BEGIN
+    -- Verificar registros na tabela 'city'
+    IF EXISTS (SELECT 1 FROM city WHERE CountryCode = OLD.Code) THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Não é possível apagar o país: existem registros relacionados na tabela city.';
+    END IF;
 
+    -- Verificar registros na tabela 'country_language'
+    IF EXISTS (SELECT 1 FROM country_language WHERE CountryCode = OLD.Code) THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Não é possível apagar o país: existem registros relacionados na tabela country_language.';
+    END IF;
+END$$
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+DELIMITER ;
